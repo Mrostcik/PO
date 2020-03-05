@@ -1,0 +1,85 @@
+  Celem zadania jest stworzenie aplikacji do wyszukiwania tekstu w dokumentach. Współczesne
+systemy operacyjne posiadają podobną, wbudowaną funkcjonalność, jednak bywa, że mechanizm ten
+zachowuje się w sposób nieoczywisty dla przeciętnego użytkownika, np. dlatego, że wyszukiwanie w
+zawartości pliku jest ​ domyślnie wyłączone​ . Narzędzia opracowane w ramach tego zadania
+laboratoryjnego mają być zorientowane na indeksowanie zawartości dokumentów w popularnych
+formatach (m.in. PDF, nie tylko plikach czysto tekstowych). By jednak nie była to kolejna odmiana
+narzędzia ​ grep aplikacja powinna “rozumieć” wewnętrzną strukturę tych dokumentów (na szczęście
+sam implementujący aplikację szczegółów tej struktury znać nie musi; zob. sekcja ​ Ekstrakcja tekstu z
+dokumentów poniżej). Ponadto, wyszukiwanie tekstu musi być szybkie, również w przypadku, gdy
+zbiór przeszukiwanych dokumentów jest duży i składa się z kilkuset, a nawet kilku tysięcy plików -
+każdorazowe skanowanie zawartości wszystkich dokumentów w poszukiwaniu zadanego w
+zapytaniu wzorca będzie tutaj niewystarczające. Stąd potrzeba utworzenia ​ indeksu​ , który znacząco
+przyspieszy proces wyszukiwania.
+  Rozwiązanie powinno składać się z dwóch komplementarnych narzędzi, zaimplementowanych jako
+osobne programy. Zadaniem pierwszego z tych narzędzi - zwanego dalej krótko ​ indekserem - jest
+wyodrębnienie tekstu z plików znajdujących się w drzewie katalogów, budowa i aktualizacja indeksu. 
+Drugi program - wyszukiwarka - ma umożliwiać użytkownikowi zadawanie zapytań i prezentować ich wyniki.
+
+Indekser:
+  --purge : powoduje usunięcie wszystkich dokumentów z indeksu i kończy pracę indeksera
+
+  --add <dir> : powoduje dodanie katalogu, którego ścieżka jest podana w argumencie
+ 		<dir>​ do zbioru indeksowanych (i monitorowanych) katalogów oraz
+		przeprowadza proces indeksowania plików znajdujących się w tym
+		poddrzewie katalogów; ścieżka podana jako argument ​ <dir>​ może być
+		bezwzględna lub względna (wobec bieżącego katalogu); należy założyć, że
+		poddrzewa katalogów dodawane do indeksu będą parami rozłączne (tj. nigdy
+		nie nastąpi próba dodania katalogu, który znajduje się w poddrzewie już
+		podlegającym indeksowaniu); po wykonaniu operacji dodania katalogu
+		indekser kończy pracę
+
+  --rm <dir> :  powoduje usunięcie katalogu podanego w argumencie ​ <dir>​ ze zbioru
+		indeksowanych katalogów oraz usunięcie wszystkich dokumentów w
+		indeksie odpowiadających plikom znajdującym się tym poddrzewie
+		katalogów; następnie kończy pracę indeksera
+
+  --reindex :   powoduje usunięcie wszystkich dokumentów odpowiadających plikom z
+		indeksu i wykonanie ponownego indeksowania zawartości wszystkich
+		katalogów dodanych wcześniej do indeksu (za pomocą opcji ​ --add​ );
+		następnie kończy pracę indeksera
+
+  --list : 	powoduje wypisanie listy katalogów znajdujących się w indeksie (dodanych
+		za pomocą wywołania z podaną opcją ​ --add​ ); ​ kanoniczne ścieżki ​ do
+		katalogów powinny być wypisane w osobnych liniach na standardowe
+		wyjście programu (w dowolnej kolejności); po wypisaniu listy katalogów
+		indekser kończy pracę
+
+Wyszukiwarka:
+  %lang en/pl : powoduje ustawienie wybranego języka (polskiego albo angielskiego)
+		używanego przy zapytaniach - może mieć on wpływ na to, w jakich
+		polach dokumentu ma być przeprowadzane wyszukiwanie (tzn. w
+		polach zawierających termy w j. polskim albo w j. angielskim);
+		domyślnie wybrany jest język angielski
+
+  %details on/off : powoduje włączenie lub wyłączenie wyświetlania kontekstu
+		    wystąpienia wyszukiwanego termu lub frazy w tekście; jeżeli
+ 		    wyświetlanie kontekstu jest wyłączone to w wyniki wyszukiwania
+		    powinny zawierać jedynie liczbę i listę ścieżek do plików, w których
+		    fraza została odnaleziona; w przeciwnym razie - dla każdego pliku z tej
+		    listy powinny być dodatkowo podane fragmenty indeksowanego tekstu
+		    zawierające wyszukiwany term/frazę; domyślnie wyświetlanie
+		    kontekstu jest wyłączone
+
+  %limit <n> : 	powoduje ograniczenie liczby wyników wyszukiwania do co najwyżej ​n
+		dokumentów (plików), gdzie ​ n ​ jest nieujemną liczbą całkowitą; 
+		jeżeli ​n= 0​ to limit powinien być ustawiony na wartość ​ Integer.MAX_INT​ ;
+		domyślna wartość to ​ n = 0
+
+  %color on/off :   powoduje włączenie lub wyłączenie wyróżniania (“podświetlania”)
+		    znalezionych termów/fraz w wyświetlanym kontekście tekstu;
+		    ustawienie to ma widoczny efekt tylko, w przypadku, gdy włączone
+		    zostało wyświetlanie kontekstu wystąpień za pomocą polecenia %details
+
+  %term : 	powoduje wybranie trybu wyszukiwania pojedynczego termu - kolejne
+		zapytania wprowadzane przez użytkownika będą interpretowane jako
+		polecenie wyszukiwania przy użyciu klasy ​ TermQuery​; 
+		ten tryb wyszukiwania jest wybrany domyślnie
+
+  %phrase : 	powoduje wybranie trybu wyszukiwania frazy, czyli ciągu termów - przy
+		kolejnych wyszukiwaniach powinien zostać użyty obiekt klasy
+		PhraseQuery ​ skonstruowany na podstawie ciągu wyrazów
+		oddzielonych spacjami podanych przez użytkownika
+
+  %fuzzy : 	powoduje wybranie trybu wyszukiwania rozmytego - w kolejnych
+		wyszukiwaniach powinien zostać użyty obiekt klasy ​ FuzzyQuery
